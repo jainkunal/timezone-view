@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>World Clock Timeline</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f0f0f;
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 { text-align: center; margin-bottom: 24px; font-weight: 300; letter-spacing: 2px; }
+    
+    .controls {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    select, button {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    select {
+      background: #1a1a1a;
+      color: #fff;
+      flex: 1;
+      min-width: 200px;
+    }
+    button {
+      background: #3b82f6;
+      color: white;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    button:hover { background: #2563eb; }
+    button.remove {
+      background: #ef4444;
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+    button.remove:hover { background: #dc2626; }
+    
+    .timeline {
+      background: #1a1a1a;
+      border-radius: 12px;
+      padding: 20px;
+      overflow-x: auto;
+    }
+    .city-row {
+      display: flex;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #2a2a2a;
+    }
+    .city-row:last-child { border-bottom: none; }
+    .city-name {
+      width: 120px;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+    .city-remove {
+      margin-left: auto;
+    }
+    .hours {
+      display: flex;
+      flex: 1;
+      min-width: 600px;
+    }
+    .hour {
+      flex: 1;
+      text-align: center;
+      font-size: 11px;
+      color: #666;
+      position: relative;
+    }
+    .hour::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      width: 1px;
+      height: 20px;
+      background: #2a2a2a;
+    }
+    .hour.current {
+      color: #3b82f6;
+      font-weight: bold;
+    }
+    .hour-block {
+      padding: 4px 0;
+    }
+    .hour-time {
+      font-size: 12px;
+      margin-bottom: 2px;
+    }
+    .day-indicator {
+      font-size: 9px;
+      color: #888;
+    }
+    .day-indicator.diff-day { color: #f59e0b; }
+    
+    .now-line {
+      position: absolute;
+      width: 2px;
+      background: #3b82f6;
+      top: 0;
+      bottom: 0;
+      z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌍 World Clock Timeline</h1>
+    
+    <div class="controls">
+      <select id="citySelect">
+        <option value="">Select a city...</option>
+        <option value="America/New_York">New York</option>
+        <option value="America/Los_Angeles">Los Angeles</option>
+        <option value="America/Chicago">Chicago</option>
+        <option value="Europe/London">London</option>
+        <option value="Europe/Paris">Paris</option>
+        <option value="Europe/Berlin">Berlin</option>
+        <option value="Asia/Dubai">Dubai</option>
+        <option value="Asia/Kolkata">Mumbai</option>
+        <option value="Asia/Singapore">Singapore</option>
+        <option value="Asia/Hong_Kong">Hong Kong</option>
+        <option value="Asia/Tokyo">Tokyo</option>
+        <option value="Asia/Seoul">Seoul</option>
+        <option value="Australia/Sydney">Sydney</option>
+        <option value="Pacific/Auckland">Auckland</option>
+      </select>
+      <button onclick="addCity()">+ Add City</button>
+    </div>
+    
+    <div class="timeline" id="timeline"></div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'timezone-cities';
+    let cities = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [
+      'America/New_York',
+      'Europe/London',
+      'Asia/Tokyo'
+    ];
+
+    function saveCities() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(cities));
+      render();
+    }
+
+    function addCity() {
+      const select = document.getElementById('citySelect');
+      const city = select.value;
+      if (city && !cities.includes(city)) {
+        cities.push(city);
+        saveCities();
+        select.value = '';
+      }
+    }
+
+    function removeCity(city) {
+      cities = cities.filter(c => c !== city);
+      saveCities();
+    }
+
+    function getTimeInZone(zone, hoursOffset = 0) {
+      const now = new Date();
+      const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+      const targetTime = new Date(utc + hoursOffset * 3600000);
+      
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: zone,
+        hour: 'numeric',
+        hour12: false,
+        minute: '2-digit'
+      });
+      
+      const dayFormatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: zone,
+        weekday: 'short'
+      });
+      
+      return {
+        time: formatter.format(targetTime),
+        day: dayFormatter.format(targetTime)
+      };
+    }
+
+    function render() {
+      const timeline = document.getElementById('timeline');
+      const now = new Date();
+      const currentHour = now.getHours();
+      
+      let html = '';
+      
+      cities.forEach(city => {
+        const cityName = city.split('/')[1].replace(/_/g, ' ');
+        const hours = [];
+        
+        for (let h = 0; h < 24; h++) {
+          const { time, day } = getTimeInZone(city, h - currentHour + 24);
+          const hourNum = parseInt(time.split(':')[0]);
+          const isCurrent = hourNum === currentHour;
+          const isDiffDay = day !== getTimeInZone(city, 0).day;
+          
+          hours.push(`
+            <div class="hour ${isCurrent ? 'current' : ''}">
+              <div class="hour-block">
+                <div class="hour-time">${time}</div>
+                <div class="day-indicator ${isDiffDay ? 'diff-day' : ''}">${day}</div>
+              </div>
+            </div>
+          `);
+        }
+        
+        html += `
+          <div class="city-row">
+            <div class="city-name">${cityName}</div>
+            <div class="hours">${hours.join('')}</div>
+            <button class="city-remove remove" onclick="removeCity('${city}')">✕</button>
+          </div>
+        `;
+      });
+      
+      timeline.innerHTML = html;
+    }
+
+    render();
+    setInterval(render, 60000);
+  </script>
+</body>
+</html>
