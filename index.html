@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>World Clock Timeline</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -11,19 +11,19 @@
       background: #0f0f0f;
       color: #fff;
       min-height: 100vh;
-      padding: 20px;
+      padding: 16px;
     }
     .container { max-width: 900px; margin: 0 auto; }
-    h1 { text-align: center; margin-bottom: 24px; font-weight: 300; letter-spacing: 2px; }
+    h1 { text-align: center; margin-bottom: 20px; font-weight: 300; letter-spacing: 2px; font-size: 1.5rem; }
     
     .controls {
       display: flex;
       gap: 8px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       flex-wrap: wrap;
     }
     select, button {
-      padding: 10px 16px;
+      padding: 12px 16px;
       border: none;
       border-radius: 8px;
       font-size: 14px;
@@ -32,7 +32,7 @@
       background: #1a1a1a;
       color: #fff;
       flex: 1;
-      min-width: 200px;
+      min-width: 150px;
     }
     button {
       background: #3b82f6;
@@ -41,122 +41,114 @@
       font-weight: 500;
     }
     button:hover { background: #2563eb; }
-    button.remove {
-      background: #ef4444;
-      padding: 6px 10px;
-      font-size: 12px;
-    }
-    button.remove:hover { background: #dc2626; }
     
     .timeline {
       background: #1a1a1a;
       border-radius: 12px;
-      padding: 20px;
-      overflow-x: auto;
+      overflow: hidden;
     }
     .city-row {
       display: flex;
-      align-items: center;
-      padding: 12px 0;
+      align-items: stretch;
       border-bottom: 1px solid #2a2a2a;
     }
     .city-row:last-child { border-bottom: none; }
-    .city-name {
-      width: 120px;
-      font-weight: 500;
+    .city-info {
+      width: 90px;
       flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 12px;
+      background: #151515;
+    }
+    .city-name {
+      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+    .city-current {
+      font-size: 11px;
+      color: #888;
     }
     .city-remove {
-      margin-left: auto;
+      background: transparent;
+      color: #666;
+      border: none;
+      padding: 4px 8px;
+      font-size: 16px;
+      cursor: pointer;
+      align-self: flex-start;
+      margin-top: 4px;
+    }
+    .city-remove:hover { background: transparent; color: #ef4444; }
+    
+    .hours-wrapper {
+      flex: 1;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: #333 #1a1a1a;
     }
     .hours {
       display: flex;
-      flex: 1;
-      min-width: 600px;
-    }
-    @media (max-width: 768px) {
-      .hours {
-        min-width: 400px;
-      }
-      .hour {
-        font-size: 9px;
-      }
-      .hour-time {
-        font-size: 10px;
-      }
-      .city-name {
-        width: 80px;
-        font-size: 12px;
-      }
-    }
-    @media (max-width: 480px) {
-      .hours {
-        min-width: 300px;
-      }
-      .hour {
-        font-size: 8px;
-      }
-      .hour-time {
-        font-size: 9px;
-      }
-      .day-indicator {
-        display: none;
-      }
-      .city-name {
-        width: 60px;
-        font-size: 11px;
-      }
+      min-width: max-content;
+      height: 100%;
     }
     .hour {
-      flex: 1;
-      text-align: center;
-      font-size: 11px;
-      color: #666;
+      width: 44px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 4px;
+      border-right: 1px solid #252525;
       position: relative;
     }
-    .hour::before {
+    .hour:last-child { border-right: none; }
+    .hour.current {
+      background: #1e293b;
+    }
+    .hour.current::before {
       content: '';
       position: absolute;
       left: 0;
-      top: 50%;
-      width: 1px;
-      height: 20px;
-      background: #2a2a2a;
-    }
-    .hour.current {
-      color: #3b82f6;
-      font-weight: bold;
-    }
-    .hour-block {
-      padding: 4px 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: #3b82f6;
     }
     .hour-time {
       font-size: 12px;
-      margin-bottom: 2px;
+      font-weight: 500;
     }
+    .hour.current .hour-time { color: #3b82f6; }
     .day-indicator {
       font-size: 9px;
-      color: #888;
+      color: #666;
+      margin-top: 2px;
     }
     .day-indicator.diff-day { color: #f59e0b; }
     
-    .now-line {
-      position: absolute;
-      width: 2px;
-      background: #3b82f6;
-      top: 0;
-      bottom: 0;
-      z-index: 10;
+    /* Hide scrollbar but keep functionality */
+    .hours-wrapper::-webkit-scrollbar { height: 6px; }
+    .hours-wrapper::-webkit-scrollbar-track { background: #1a1a1a; }
+    .hours-wrapper::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    
+    @media (min-width: 600px) {
+      .city-info { width: 120px; }
+      .hour { width: 50px; }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🌍 World Clock Timeline</h1>
+    <h1>🌍 World Clock</h1>
     
     <div class="controls">
       <select id="citySelect">
-        <option value="">Select a city...</option>
+        <option value="">Add city...</option>
         <option value="America/New_York">New York</option>
         <option value="America/Los_Angeles">Los Angeles</option>
         <option value="America/Chicago">Chicago</option>
@@ -172,7 +164,7 @@
         <option value="Australia/Sydney">Sydney</option>
         <option value="Pacific/Auckland">Auckland</option>
       </select>
-      <button onclick="addCity()">+ Add City</button>
+      <button onclick="addCity()">+ Add</button>
     </div>
     
     <div class="timeline" id="timeline"></div>
@@ -238,29 +230,33 @@
       
       cities.forEach(city => {
         const cityName = city.split('/')[1].replace(/_/g, ' ');
-        const hours = [];
+        const { time: currentTime } = getTimeInZone(city, 0);
         
+        let hoursHtml = '';
         for (let h = 0; h < 24; h++) {
           const { time, day } = getTimeInZone(city, h - currentHour + 24);
           const hourNum = parseInt(time.split(':')[0]);
           const isCurrent = hourNum === currentHour;
           const isDiffDay = day !== getTimeInZone(city, 0).day;
           
-          hours.push(`
+          hoursHtml += `
             <div class="hour ${isCurrent ? 'current' : ''}">
-              <div class="hour-block">
-                <div class="hour-time">${time}</div>
-                <div class="day-indicator ${isDiffDay ? 'diff-day' : ''}">${day}</div>
-              </div>
+              <div class="hour-time">${time}</div>
+              <div class="day-indicator ${isDiffDay ? 'diff-day' : ''}">${day}</div>
             </div>
-          `);
+          `;
         }
         
         html += `
           <div class="city-row">
-            <div class="city-name">${cityName}</div>
-            <div class="hours">${hours.join('')}</div>
-            <button class="city-remove remove" onclick="removeCity('${city}')">✕</button>
+            <div class="city-info">
+              <div class="city-name">${cityName}</div>
+              <div class="city-current">${currentTime}</div>
+              <button class="city-remove" onclick="removeCity('${city}')">✕</button>
+            </div>
+            <div class="hours-wrapper">
+              <div class="hours">${hoursHtml}</div>
+            </div>
           </div>
         `;
       });
