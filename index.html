@@ -2,101 +2,195 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   <title>World Clock Timeline</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+    
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: #0f0f0f;
       color: #fff;
-      min-height: 100vh;
-      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      padding: env(safe-area-inset-top, 12px) env(safe-area-inset-right, 12px) env(safe-area-inset-bottom, 12px) env(safe-area-inset-left, 12px);
     }
-    .container { max-width: 900px; margin: 0 auto; }
-    h1 { text-align: center; margin-bottom: 20px; font-weight: 300; letter-spacing: 2px; font-size: 1.5rem; }
+    
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: #0f0f0f;
+      padding-bottom: 12px;
+    }
+    
+    h1 {
+      text-align: center;
+      margin-bottom: 16px;
+      font-weight: 300;
+      letter-spacing: 2px;
+      font-size: 1.4rem;
+    }
     
     .controls {
       display: flex;
-      gap: 8px;
-      margin-bottom: 20px;
+      gap: 10px;
       flex-wrap: wrap;
     }
+    
     select, button {
-      padding: 12px 16px;
+      padding: 14px 18px;
       border: none;
-      border-radius: 8px;
-      font-size: 14px;
+      border-radius: 10px;
+      font-size: 16px;
+      min-height: 48px;
+      touch-action: manipulation;
     }
+    
     select {
       background: #1a1a1a;
       color: #fff;
       flex: 1;
-      min-width: 150px;
+      min-width: 140px;
+      cursor: pointer;
     }
+    
     button {
       background: #3b82f6;
       color: white;
       cursor: pointer;
-      font-weight: 500;
+      font-weight: 600;
+      min-width: 80px;
     }
-    button:hover { background: #2563eb; }
     
-    .timeline {
+    button:active { background: #1d4ed8; transform: scale(0.98); }
+    
+    .timeline-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
       background: #1a1a1a;
       border-radius: 12px;
       overflow: hidden;
+      min-height: 0;
     }
+    
+    .city-names-column {
+      flex-shrink: 0;
+      width: 100px;
+      background: #151515;
+      border-right: 1px solid #2a2a2a;
+      overflow-x: hidden;
+    }
+    
+    .scroll-wrapper {
+      flex: 1;
+      display: flex;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    
+    .hours-scroll {
+      flex: 1;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: #444 #1a1a1a;
+      position: relative;
+    }
+    
+    .hours-scroll::-webkit-scrollbar { height: 8px; }
+    .hours-scroll::-webkit-scrollbar-track { background: #1a1a1a; }
+    .hours-scroll::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+    .hours-scroll::-webkit-scrollbar-thumb:hover { background: #555; }
+    
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      min-width: max-content;
+      position: relative;
+    }
+    
+    .current-time-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #ef4444;
+      z-index: 50;
+      pointer-events: none;
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+    }
+    
+    .current-time-line::before {
+      content: '';
+      position: absolute;
+      top: -4px;
+      left: -4px;
+      width: 10px;
+      height: 10px;
+      background: #ef4444;
+      border-radius: 50%;
+      box-shadow: 0 0 6px rgba(239, 68, 68, 0.8);
+    }
+    
     .city-row {
       display: flex;
-      align-items: stretch;
       border-bottom: 1px solid #2a2a2a;
+      min-height: 70px;
     }
+    
     .city-row:last-child { border-bottom: none; }
+    
     .city-info {
-      width: 90px;
-      flex-shrink: 0;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      padding: 12px;
-      background: #151515;
+      padding: 10px 8px;
+      min-height: 70px;
     }
+    
     .city-name {
       font-weight: 600;
       font-size: 13px;
       margin-bottom: 4px;
+      line-height: 1.2;
     }
+    
     .city-current {
-      font-size: 11px;
-      color: #888;
+      font-size: 12px;
+      color: #3b82f6;
+      font-weight: 500;
     }
+    
     .city-remove {
       background: transparent;
-      color: #666;
+      color: #555;
       border: none;
-      padding: 4px 8px;
-      font-size: 16px;
+      padding: 4px;
+      font-size: 14px;
       cursor: pointer;
-      align-self: flex-start;
+      min-height: auto;
       margin-top: 4px;
+      width: fit-content;
     }
-    .city-remove:hover { background: transparent; color: #ef4444; }
     
-    .hours-wrapper {
-      flex: 1;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: thin;
-      scrollbar-color: #333 #1a1a1a;
-    }
+    .city-remove:active { color: #ef4444; }
+    
     .hours {
       display: flex;
-      min-width: max-content;
       height: 100%;
+      min-height: 70px;
     }
+    
     .hour {
-      width: 44px;
+      width: 60px;
       flex-shrink: 0;
       display: flex;
       flex-direction: column;
@@ -106,46 +200,58 @@
       border-right: 1px solid #252525;
       position: relative;
     }
+    
     .hour:last-child { border-right: none; }
-    .hour.current {
-      background: #1e293b;
-    }
-    .hour.current::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 3px;
-      background: #3b82f6;
-    }
+    
     .hour-time {
-      font-size: 12px;
+      font-size: 14px;
       font-weight: 500;
     }
-    .hour.current .hour-time { color: #3b82f6; }
-    .day-indicator {
-      font-size: 9px;
-      color: #666;
-      margin-top: 2px;
-    }
-    .day-indicator.diff-day { color: #f59e0b; }
     
-    /* Hide scrollbar but keep functionality */
-    .hours-wrapper::-webkit-scrollbar { height: 6px; }
-    .hours-wrapper::-webkit-scrollbar-track { background: #1a1a1a; }
-    .hours-wrapper::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    .day-indicator {
+      font-size: 10px;
+      color: #666;
+      margin-top: 4px;
+    }
+    
+    .day-indicator.diff-day { color: #f59e0b; font-weight: 500; }
+    
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      color: #666;
+      text-align: center;
+    }
+    
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
     
     @media (min-width: 600px) {
-      .city-info { width: 120px; }
-      .hour { width: 50px; }
+      .city-names-column { width: 130px; }
+      .city-info { padding: 12px 10px; }
+      .hour { width: 70px; }
+      .hour-time { font-size: 15px; }
+      .city-name { font-size: 14px; }
+      .city-current { font-size: 13px; }
+    }
+    
+    @media (max-width: 400px) {
+      .city-names-column { width: 85px; }
+      .hour { width: 52px; }
+      .hour-time { font-size: 13px; }
+      h1 { font-size: 1.2rem; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>🌍 World Clock</h1>
-    
+  <div class="header">
+    <h1>World Clock</h1>
     <div class="controls">
       <select id="citySelect">
         <option value="">Add city...</option>
@@ -156,6 +262,7 @@
         <option value="Europe/Paris">Paris</option>
         <option value="Europe/Berlin">Berlin</option>
         <option value="Asia/Dubai">Dubai</option>
+        <option value="Asia/Ho_Chi_Minh">Ho Chi Minh City</option>
         <option value="Asia/Kolkata">Mumbai</option>
         <option value="Asia/Singapore">Singapore</option>
         <option value="Asia/Hong_Kong">Hong Kong</option>
@@ -166,8 +273,17 @@
       </select>
       <button onclick="addCity()">+ Add</button>
     </div>
-    
-    <div class="timeline" id="timeline"></div>
+  </div>
+  
+  <div class="timeline-container" id="timelineContainer">
+    <div class="scroll-wrapper">
+      <div class="city-names-column" id="cityNamesColumn"></div>
+      <div class="hours-scroll" id="hoursScroll">
+        <div class="timeline" id="timeline">
+          <div class="current-time-line" id="currentTimeLine"></div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -177,6 +293,24 @@
       'Europe/London',
       'Asia/Tokyo'
     ];
+
+    const cityDisplayNames = {
+      'America/New_York': 'New York',
+      'America/Los_Angeles': 'Los Angeles',
+      'America/Chicago': 'Chicago',
+      'Europe/London': 'London',
+      'Europe/Paris': 'Paris',
+      'Europe/Berlin': 'Berlin',
+      'Asia/Dubai': 'Dubai',
+      'Asia/Ho_Chi_Minh': 'Ho Chi Minh',
+      'Asia/Kolkata': 'Mumbai',
+      'Asia/Singapore': 'Singapore',
+      'Asia/Hong_Kong': 'Hong Kong',
+      'Asia/Tokyo': 'Tokyo',
+      'Asia/Seoul': 'Seoul',
+      'Australia/Sydney': 'Sydney',
+      'Pacific/Auckland': 'Auckland'
+    };
 
     function saveCities() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(cities));
@@ -198,10 +332,10 @@
       saveCities();
     }
 
-    function getTimeInZone(zone, hoursOffset = 0) {
+    function getTimeInZone(zone, hoursOffset = 0, minutesOffset = 0) {
       const now = new Date();
       const utc = now.getTime() + now.getTimezoneOffset() * 60000;
-      const targetTime = new Date(utc + hoursOffset * 3600000);
+      const targetTime = new Date(utc + hoursOffset * 3600000 + minutesOffset * 60000);
       
       const formatter = new Intl.DateTimeFormat('en-US', {
         timeZone: zone,
@@ -217,55 +351,176 @@
       
       return {
         time: formatter.format(targetTime),
-        day: dayFormatter.format(targetTime)
+        day: dayFormatter.format(targetTime),
+        hour: targetTime.getHours(),
+        minute: targetTime.getMinutes()
       };
     }
 
-    function render() {
-      const timeline = document.getElementById('timeline');
+    function getBaseTime(zone) {
       const now = new Date();
-      const currentHour = now.getHours();
+      const startOfDay = new Date(now);
+      startOfDay.setHours(0, 0, 0, 0);
       
-      let html = '';
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: zone,
+        hour: 'numeric',
+        hour12: false,
+        minute: '2-digit'
+      });
+      
+      const dayFormatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: zone,
+        weekday: 'short'
+      });
+      
+      return { formatter, dayFormatter };
+    }
+
+    function getSlotWidth() {
+      if (window.innerWidth <= 400) return 52;
+      if (window.innerWidth < 600) return 60;
+      return 70;
+    }
+
+    function updateCurrentTimeLine() {
+      const line = document.getElementById('currentTimeLine');
+      if (!line || cities.length === 0) return;
+      
+      const now = new Date();
+      const hours = now.getHours();
+      const minutes = now.getMinutes();
+      const totalMinutes = hours * 60 + minutes;
+      const totalSlots = 48;
+      const slotWidth = getSlotWidth();
+      const position = (totalMinutes / (24 * 60)) * totalSlots * slotWidth;
+      
+      line.style.left = position + 'px';
+    }
+
+    function getSlotDayOffset(city, slot) {
+      const now = new Date();
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: city,
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: 'numeric',
+        hour12: false,
+        minute: '2-digit'
+      });
+      
+      const parts = formatter.formatToParts(now);
+      let currentDayInZone = 0;
+      for (const part of parts) {
+        if (part.type === 'day') currentDayInZone = parseInt(part.value);
+      }
+      
+      const slotHour = Math.floor(slot / 2);
+      const slotMinute = (slot % 2) * 30;
+      
+      const nowParts = formatter.formatToParts(now);
+      let currentHourInZone = 0;
+      let currentMinuteInZone = 0;
+      for (const part of nowParts) {
+        if (part.type === 'hour') currentHourInZone = parseInt(part.value);
+        if (part.type === 'minute') currentMinuteInZone = parseInt(part.value);
+      }
+      
+      const currentSlotInZone = currentHourInZone * 2 + (currentMinuteInZone >= 30 ? 1 : 0);
+      const slotDiff = slot - currentSlotInZone;
+      
+      if (slotDiff > 24) return -1;
+      if (slotDiff < -24) return 1;
+      return 0;
+    }
+
+    function render() {
+      const cityNamesColumn = document.getElementById('cityNamesColumn');
+      const timeline = document.getElementById('timeline');
+      
+      if (cities.length === 0) {
+        cityNamesColumn.innerHTML = '';
+        timeline.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🌍</div>
+            <div>Add cities to see their timelines</div>
+          </div>
+        `;
+        return;
+      }
+      
+      let namesHtml = '';
+      let timelineHtml = '<div class="current-time-line" id="currentTimeLine"></div>';
       
       cities.forEach(city => {
-        const cityName = city.split('/')[1].replace(/_/g, ' ');
+        const cityName = cityDisplayNames[city] || city.split('/')[1].replace(/_/g, ' ');
         const { time: currentTime } = getTimeInZone(city, 0);
         
-        let hoursHtml = '';
-        for (let h = 0; h < 24; h++) {
-          const { time, day } = getTimeInZone(city, h - currentHour + 24);
-          const hourNum = parseInt(time.split(':')[0]);
-          const isCurrent = hourNum === currentHour;
-          const isDiffDay = day !== getTimeInZone(city, 0).day;
-          
-          hoursHtml += `
-            <div class="hour ${isCurrent ? 'current' : ''}">
-              <div class="hour-time">${time}</div>
-              <div class="day-indicator ${isDiffDay ? 'diff-day' : ''}">${day}</div>
-            </div>
-          `;
-        }
-        
-        html += `
+        namesHtml += `
           <div class="city-row">
             <div class="city-info">
               <div class="city-name">${cityName}</div>
               <div class="city-current">${currentTime}</div>
               <button class="city-remove" onclick="removeCity('${city}')">✕</button>
             </div>
-            <div class="hours-wrapper">
-              <div class="hours">${hoursHtml}</div>
+          </div>
+        `;
+        
+        let hoursHtml = '';
+        for (let slot = 0; slot < 48; slot++) {
+          const hour = Math.floor(slot / 2);
+          const minute = (slot % 2) * 30;
+          
+          const displayTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+          
+          const dayOffset = getSlotDayOffset(city, slot);
+          let dayIndicator = '';
+          let isDiffDay = false;
+          
+          if (dayOffset < 0) {
+            dayIndicator = 'YDA';
+            isDiffDay = true;
+          } else if (dayOffset > 0) {
+            dayIndicator = 'TOM';
+            isDiffDay = true;
+          }
+          
+          hoursHtml += `
+            <div class="hour">
+              <div class="hour-time">${displayTime}</div>
+              <div class="day-indicator ${isDiffDay ? 'diff-day' : ''}">${dayIndicator}</div>
             </div>
+          `;
+        }
+        
+        timelineHtml += `
+          <div class="city-row">
+            <div class="hours">${hoursHtml}</div>
           </div>
         `;
       });
       
-      timeline.innerHTML = html;
+      cityNamesColumn.innerHTML = namesHtml;
+      timeline.innerHTML = timelineHtml;
+      
+      updateCurrentTimeLine();
+    }
+
+    function syncScroll() {
+      const cityNames = document.getElementById('cityNamesColumn');
+      const hoursScroll = document.getElementById('hoursScroll');
+      
+      if (cityNames.scrollHeight > cityNames.clientHeight) {
+        hoursScroll.style.overflowY = 'auto';
+      }
     }
 
     render();
-    setInterval(render, 60000);
+    setInterval(render, 30000);
+    setInterval(updateCurrentTimeLine, 1000);
+
+    window.addEventListener('resize', updateCurrentTimeLine);
   </script>
 </body>
 </html>
